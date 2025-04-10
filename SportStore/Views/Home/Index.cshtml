@@ -47,19 +47,32 @@
                             <p class="quantity mb-3">
                                 <i class="bi bi-box"></i> Còn lại: @product.Quantity sản phẩm
                             </p>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <a href="@Url.Action("Details", "Home", new { id = product.Id })" class="btn btn-info">
-                                    <i class="bi bi-eye"></i> Xem chi tiết
-                                </a>
+                            <div class="d-flex flex-column">
+                                <div class="mb-2">
+                                    <a href="@Url.Action("Details", "Home", new { id = product.Id })" class="btn btn-info btn-sm w-100" style="height: 30px; line-height: 18px;">
+                                        <i class="bi bi-eye"></i> Xem chi tiết
+                                    </a>
+                                </div>
                                 @if (product.Quantity > 0)
                                 {
-                                    <button class="btn btn-primary" onclick="addToCart(@product.Id)">
-                                        <i class="bi bi-cart-plus"></i> Thêm vào giỏ
-                                    </button>
+                                    <div class="d-flex align-items-center">
+                                        <div class="input-group me-2" style="width: 90px;">
+                                            <button class="btn btn-outline-secondary btn-sm p-0" type="button" onclick="decreaseQuantity(@product.Id)" style="width: 25px; height: 30px; line-height: 1;">
+                                                <i class="bi bi-dash"></i>
+                                            </button>
+                                            <input type="number" class="form-control text-center p-0" id="quantity-@product.Id" value="1" min="1" max="@product.Quantity" style="height: 30px; font-size: 0.9rem;">
+                                            <button class="btn btn-outline-secondary btn-sm p-0" type="button" onclick="increaseQuantity(@product.Id)" style="width: 25px; height: 30px; line-height: 1;">
+                                                <i class="bi bi-plus"></i>
+                                            </button>
+                                        </div>
+                                        <button class="btn btn-primary btn-sm flex-grow-1" onclick="addToCart(@product.Id)" id="addToCartBtn-@product.Id" style="height: 30px; line-height: 18px;">
+                                            <i class="bi bi-cart-plus"></i> Thêm vào giỏ
+                                        </button>
+                                    </div>
                                 }
                                 else
                                 {
-                                    <button class="btn btn-danger" disabled>
+                                    <button class="btn btn-danger btn-sm w-100" disabled style="height: 30px; line-height: 18px;">
                                         <i class="bi bi-x-circle"></i> Hết hàng
                                     </button>
                                 }
@@ -74,25 +87,65 @@
 
 @section Scripts {
     <script>
+        function decreaseQuantity(productId) {
+            const quantityInput = document.getElementById(`quantity-${productId}`);
+            const currentValue = parseInt(quantityInput.value);
+            if (currentValue > 1) {
+                quantityInput.value = currentValue - 1;
+            }
+        }
+        
+        function increaseQuantity(productId) {
+            const quantityInput = document.getElementById(`quantity-${productId}`);
+            const currentValue = parseInt(quantityInput.value);
+            const maxValue = parseInt(quantityInput.max);
+            if (currentValue < maxValue) {
+                quantityInput.value = currentValue + 1;
+            }
+        }
+        
         function addToCart(productId) {
+            const quantityInput = document.getElementById(`quantity-${productId}`);
+            const quantity = parseInt(quantityInput.value);
+            const addToCartBtn = document.getElementById(`addToCartBtn-${productId}`);
+            
+            // Disable button and show loading state
+            addToCartBtn.disabled = true;
+            addToCartBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang thêm...';
+            
             fetch('/Cart/AddToCart', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                body: JSON.stringify({ productId: productId })
+                body: `productId=${productId}&quantity=${quantity}`
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert('Đã thêm sản phẩm vào giỏ hàng!');
+                    // Show success alert
+                    alert(data.message);
+                    
+                    // Update cart count in navbar if it exists
+                    const cartCount = document.getElementById('cartCount');
+                    if (cartCount) {
+                        const currentCount = parseInt(cartCount.textContent) || 0;
+                        cartCount.textContent = currentCount + quantity;
+                    }
                 } else {
-                    alert('Có lỗi xảy ra: ' + data.message);
+                    // Show error alert
+                    alert(data.message);
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Có lỗi xảy ra khi thêm vào giỏ hàng');
+                // Show error alert
+                alert('Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng');
+            })
+            .finally(() => {
+                // Re-enable button and restore original text
+                addToCartBtn.disabled = false;
+                addToCartBtn.innerHTML = '<i class="bi bi-cart-plus"></i> Thêm vào giỏ';
             });
         }
     </script>

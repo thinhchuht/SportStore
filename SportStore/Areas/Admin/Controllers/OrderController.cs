@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SportStore.Models;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace SportStore.Areas.Admin.Controllers
 {
@@ -47,7 +49,39 @@ namespace SportStore.Areas.Admin.Controllers
                 return RedirectToAction("Index");
             }
 
-            return View(order);
+            // Kiểm tra OrderItems
+            if (order.OrderItems == null)
+            {
+                // Nếu OrderItems là null, khởi tạo danh sách trống
+                order.OrderItems = new List<OrderItem>();
+                TempData["Error"] = "Không tìm thấy thông tin chi tiết đơn hàng";
+            }
+            else if (!order.OrderItems.Any())
+            {
+                // Nếu không có sản phẩm, thử tải trực tiếp từ database
+                var orderItems = _context.OrderItems
+                    .Include(oi => oi.Product)
+                    .Where(oi => oi.OrderId == id)
+                    .ToList();
+
+                if (orderItems.Any())
+                {
+                    order.OrderItems = orderItems;
+                }
+                else
+                {
+                    TempData["Error"] = "Đơn hàng không có sản phẩm nào";
+                }
+            }
+
+            // Debug information
+            ViewBag.ControllerName = ControllerContext.RouteData.Values["controller"];
+            ViewBag.ActionName = ControllerContext.RouteData.Values["action"];
+            ViewBag.AreaName = ControllerContext.RouteData.Values["area"];
+            ViewBag.OrderItemsCount = order.OrderItems?.Count ?? 0;
+
+            // Explicitly specify the view path
+            return View("~/Areas/Admin/Views/Order/Details.cshtml", order);
         }
 
         [HttpPost]

@@ -6,6 +6,13 @@
 }
 
 <div class="container py-5">
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger mb-4">
+            @TempData["Error"]
+        </div>
+    }
+    
     <div class="row">
         <div class="col-lg-8">
             <div class="card mb-4">
@@ -16,12 +23,18 @@
                     <form id="checkout-form" method="post" action="@Url.Action("PlaceOrder", "Checkout")">
                         <div class="mb-3">
                             <label for="shippingAddress" class="form-label">Địa chỉ giao hàng <span class="text-danger">*</span></label>
-                            <textarea class="form-control" id="shippingAddress" name="shippingAddress" rows="3" required></textarea>
+                            <textarea class="form-control" id="shippingAddress" name="shippingAddress" rows="3" required minlength="10"></textarea>
+                            <div class="invalid-feedback">
+                                Vui lòng nhập địa chỉ giao hàng chi tiết
+                            </div>
                         </div>
                         
                         <div class="mb-3">
                             <label for="phoneNumber" class="form-label">Số điện thoại <span class="text-danger">*</span></label>
-                            <input type="tel" class="form-control" id="phoneNumber" name="phoneNumber" required>
+                            <input type="tel" class="form-control" id="phoneNumber" name="phoneNumber" required pattern="[0-9]{10,11}">
+                            <div class="invalid-feedback">
+                                Vui lòng nhập số điện thoại hợp lệ (10-11 số)
+                            </div>
                         </div>
                         
                         <div class="mb-3">
@@ -38,6 +51,13 @@
                                     Chuyển khoản ngân hàng
                                 </label>
                             </div>
+                            <div id="bankDetails" class="mt-3 p-3 border rounded bg-light" style="display: none;">
+                                <h6>Thông tin chuyển khoản:</h6>
+                                <p class="mb-1">Ngân hàng: <strong>Vietcombank</strong></p>
+                                <p class="mb-1">Số tài khoản: <strong>1234567890</strong></p>
+                                <p class="mb-1">Chủ tài khoản: <strong>SPORT STORE</strong></p>
+                                <p class="mb-0">Nội dung: <strong>Thanh toan don hang [Họ tên]</strong></p>
+                            </div>
                         </div>
                         
                         <div class="mb-3">
@@ -49,7 +69,7 @@
                             <a href="@Url.Action("Index", "Cart")" class="btn btn-secondary">
                                 <i class="bi bi-arrow-left"></i> Quay lại giỏ hàng
                             </a>
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="btn btn-primary" id="placeOrderBtn">
                                 <i class="bi bi-check-circle"></i> Đặt hàng
                             </button>
                         </div>
@@ -98,4 +118,58 @@
             </div>
         </div>
     </div>
-</div> 
+</div>
+
+@section Scripts {
+    <script>
+        // Form validation
+        (function() {
+            'use strict';
+            
+            var form = document.getElementById('checkout-form');
+            var paymentMethods = document.querySelectorAll('input[name="paymentMethod"]');
+            var bankDetails = document.getElementById('bankDetails');
+            var placeOrderBtn = document.getElementById('placeOrderBtn');
+            
+            // Toggle bank details visibility
+            paymentMethods.forEach(function(radio) {
+                radio.addEventListener('change', function() {
+                    if (this.value === 'bank_transfer') {
+                        bankDetails.style.display = 'block';
+                    } else {
+                        bankDetails.style.display = 'none';
+                    }
+                });
+            });
+            
+            // Handle form submission
+            form.addEventListener('submit', function(event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    
+                    // Show validation messages
+                    var invalidFields = form.querySelectorAll(':invalid');
+                    invalidFields.forEach(function(field) {
+                        field.classList.add('is-invalid');
+                    });
+                } else {
+                    // Disable button to prevent double submission
+                    placeOrderBtn.disabled = true;
+                    placeOrderBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang xử lý...';
+                }
+                
+                form.classList.add('was-validated');
+            }, false);
+            
+            // Clear validation on input
+            form.querySelectorAll('.form-control').forEach(function(input) {
+                input.addEventListener('input', function() {
+                    if (this.checkValidity()) {
+                        this.classList.remove('is-invalid');
+                    }
+                });
+            });
+        })();
+    </script>
+} 

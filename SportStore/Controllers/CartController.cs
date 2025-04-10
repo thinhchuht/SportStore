@@ -59,13 +59,25 @@ namespace SportStore.Controllers
                 return Json(new { success = false, message = "Sản phẩm không tồn tại" });
             }
 
-            if (product.Quantity < quantity)
-            {
-                return Json(new { success = false, message = "Số lượng sản phẩm không đủ" });
-            }
-
             var cartItem = _context.Carts
                 .FirstOrDefault(c => c.UserId == user.Id && c.ProductId == productId);
+
+            // Calculate total quantity (existing + new)
+            int totalQuantity = quantity;
+            if (cartItem != null)
+            {
+                totalQuantity += cartItem.Quantity;
+            }
+
+            // Check if total quantity exceeds available quantity
+            if (product.Quantity < totalQuantity)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = $"Số lượng không đủ. Sản phẩm còn {product.Quantity} trong kho. Giỏ hàng của bạn đã có {cartItem?.Quantity ?? 0} sản phẩm này."
+                });
+            }
 
             if (cartItem != null)
             {

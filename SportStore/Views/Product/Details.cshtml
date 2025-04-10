@@ -6,10 +6,11 @@
             <input type="number" id="quantity" class="form-control text-center" value="1" min="1" max="@Model.Quantity">
             <button class="btn btn-outline-secondary" type="button" onclick="increaseQuantity()">+</button>
         </div>
-        <button class="btn btn-primary" onclick="addToCart(@Model.Id)">
+        <button class="btn btn-primary" onclick="addToCart(@Model.Id)" id="addToCartBtn">
             <i class="bi bi-cart-plus"></i> Thêm vào giỏ hàng
         </button>
     </div>
+    <div id="cartMessage" class="mt-2" style="display: none;"></div>
 </div>
 
 @section Scripts {
@@ -33,6 +34,12 @@
         
         function addToCart(productId) {
             var quantity = document.getElementById('quantity').value;
+            var addToCartBtn = document.getElementById('addToCartBtn');
+            var cartMessage = document.getElementById('cartMessage');
+            
+            // Disable button and show loading state
+            addToCartBtn.disabled = true;
+            addToCartBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang thêm...';
             
             fetch('/Cart/AddToCart', {
                 method: 'POST',
@@ -44,14 +51,37 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert(data.message);
+                    cartMessage.className = 'mt-2 alert alert-success';
+                    cartMessage.style.display = 'block';
+                    cartMessage.innerHTML = data.message;
+                    
+                    // Update cart count in navbar if it exists
+                    var cartCount = document.getElementById('cartCount');
+                    if (cartCount) {
+                        var currentCount = parseInt(cartCount.textContent) || 0;
+                        cartCount.textContent = currentCount + parseInt(quantity);
+                    }
                 } else {
-                    alert(data.message);
+                    cartMessage.className = 'mt-2 alert alert-danger';
+                    cartMessage.style.display = 'block';
+                    cartMessage.innerHTML = data.message;
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng');
+                cartMessage.className = 'mt-2 alert alert-danger';
+                cartMessage.style.display = 'block';
+                cartMessage.innerHTML = 'Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng';
+            })
+            .finally(() => {
+                // Re-enable button and restore original text
+                addToCartBtn.disabled = false;
+                addToCartBtn.innerHTML = '<i class="bi bi-cart-plus"></i> Thêm vào giỏ hàng';
+                
+                // Hide message after 3 seconds
+                setTimeout(() => {
+                    cartMessage.style.display = 'none';
+                }, 3000);
             });
         }
     </script>
