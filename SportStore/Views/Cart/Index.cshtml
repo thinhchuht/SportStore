@@ -1,0 +1,184 @@
+@model List<Cart>
+@{
+    ViewData["Title"] = "Giỏ hàng";
+    Layout = "_CustomerLayout";
+    decimal totalAmount = 0;
+}
+
+<div class="container py-5">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h1 class="h3 mb-0">Giỏ hàng của bạn</h1>
+        </div>
+        <div class="card-body">
+            @if (Model.Count > 0)
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Sản phẩm</th>
+                                <th>Giá</th>
+                                <th>Số lượng</th>
+                                <th>Thành tiền</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                var itemTotal = item.Price * item.Quantity;
+                                totalAmount += itemTotal;
+
+                                <tr id="cart-item-@item.Id">
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <img src="@item.Product.Image" alt="@item.Product.Name" class="img-thumbnail me-3" style="width: 80px; height: 80px; object-fit: cover;">
+                                            <div>
+                                                <h5 class="mb-0">@item.Product.Name</h5>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>@item.Price.ToString("N0") VNĐ</td>
+                                    <td>
+                                        <div class="input-group" style="width: 120px;">
+                                            <button class="btn btn-outline-secondary" type="button" onclick="updateQuantity(@item.Id, -1)">-</button>
+                                            <input type="number" class="form-control text-center" value="@item.Quantity" min="1" max="@item.Product.Quantity" id="quantity-@item.Id" onchange="updateCart(@item.Id, this.value)">
+                                            <button class="btn btn-outline-secondary" type="button" onclick="updateQuantity(@item.Id, 1)">+</button>
+                                        </div>
+                                    </td>
+                                    <td id="item-total-@item.Id">@itemTotal.ToString("N0") VNĐ</td>
+                                    <td>
+                                        <button class="btn btn-danger btn-sm" onclick="removeFromCart(@item.Id)">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="3" class="text-end"><strong>Tổng cộng:</strong></td>
+                                <td id="cart-total">@totalAmount.ToString("N0") VNĐ</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="@Url.Action("Index", "Home")" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Tiếp tục mua sắm
+                    </a>
+                    <div>
+                        <button class="btn btn-outline-danger me-2" onclick="clearCart()">
+                            <i class="bi bi-x-circle"></i> Xóa giỏ hàng
+                        </button>
+                        <a href="@Url.Action("Index", "Checkout")" class="btn btn-primary">
+                            <i class="bi bi-credit-card"></i> Thanh toán
+                        </a>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-cart-x" style="font-size: 5rem; color: #ccc;"></i>
+                    <h3 class="mt-4">Giỏ hàng của bạn đang trống</h3>
+                    <p class="text-muted">Hãy thêm sản phẩm vào giỏ hàng để tiếp tục mua sắm</p>
+                    <a href="@Url.Action("Index", "Home")" class="btn btn-primary mt-3">
+                        <i class="bi bi-arrow-left"></i> Tiếp tục mua sắm
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function updateQuantity(cartId, change) {
+            const quantityInput = document.getElementById(`quantity-${cartId}`);
+            let newQuantity = parseInt(quantityInput.value) + change;
+            
+            if (newQuantity < 1) newQuantity = 1;
+            if (newQuantity > parseInt(quantityInput.max)) newQuantity = parseInt(quantityInput.max);
+            
+            quantityInput.value = newQuantity;
+            updateCart(cartId, newQuantity);
+        }
+        
+        function updateCart(cartId, quantity) {
+            fetch('/Cart/UpdateCart', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `cartId=${cartId}&quantity=${quantity}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Reload the page to update totals
+                    location.reload();
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Có lỗi xảy ra khi cập nhật giỏ hàng');
+            });
+        }
+        
+        function removeFromCart(cartId) {
+            if (confirm('Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?')) {
+                fetch(`/Cart/RemoveFromCart?cartId=${cartId}`, {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Remove the item from the DOM
+                        document.getElementById(`cart-item-${cartId}`).remove();
+                        
+                        // Check if cart is empty
+                        const cartItems = document.querySelectorAll('tbody tr');
+                        if (cartItems.length === 0) {
+                            location.reload();
+                        } else {
+                            // Reload the page to update totals
+                            location.reload();
+                        }
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Có lỗi xảy ra khi xóa sản phẩm khỏi giỏ hàng');
+                });
+            }
+        }
+        
+        function clearCart() {
+            if (confirm('Bạn có chắc chắn muốn xóa tất cả sản phẩm khỏi giỏ hàng?')) {
+                fetch('/Cart/ClearCart', {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Có lỗi xảy ra khi xóa giỏ hàng');
+                });
+            }
+        }
+    </script>
+} 

@@ -5,8 +5,13 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-builder.Services.AddSession();
-builder.Services.AddDbContext<StoreContext>(o => o.UseSqlServer("Server=localhost,1433;Database=sportStore;User Id=sa;Password=12345678aB@;TrustServerCertificate=True;"));
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromHours(2);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+builder.Services.AddDbContext<StoreContext>(o => o.UseSqlServer("Data Source=THINHCHU;Initial Catalog=SportStore;Trusted_Connection=True;Integrated Security=SSPI;TrustServerCertificate=True;"));
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -24,7 +29,11 @@ app.UseSession();
 app.UseAuthorization();
 
 app.MapControllerRoute(
+    name: "areas",
+    pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
+
+app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Account}/{action=Login}/{id?}");
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();

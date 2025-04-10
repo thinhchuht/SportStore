@@ -1,17 +1,18 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using SportStore.Models;
 
-namespace SportStore.Controllers
+namespace SportStore.Areas.Admin.Controllers
 {
-    public class AdminController(StoreContext context, IWebHostEnvironment environment) : Controller
+    [Area("Admin")]
+    public class ProductController(StoreContext context, IWebHostEnvironment environment) : Controller
     {
         private readonly string _imagePath = Path.Combine("wwwroot", "images", "products");
 
         public IActionResult Index()
         {
-            if (HttpContext.Session.GetInt32("IsAdmin") != 1)
+            if (HttpContext.Session.GetString("IsAdmin") != "true")
             {
-                return RedirectToAction("Login", "Account");
+                return RedirectToAction("Login", "Account", new { area = "" });
             }
             var products = context.Products.ToList();
             return View(products);
@@ -20,9 +21,9 @@ namespace SportStore.Controllers
         // GET: Thêm/sửa sản phẩm
         public IActionResult Edit(int? id)
         {
-            if (HttpContext.Session.GetInt32("IsAdmin") != 1)
+            if (HttpContext.Session.GetString("IsAdmin") != "true")
             {
-                return RedirectToAction("Login", "Account");
+                return RedirectToAction("Login", "Account", new { area = "" });
             }
             var product = id.HasValue ? context.Products.Find(id) : new Product();
             var viewModel = new ProductViewModel
@@ -49,7 +50,7 @@ namespace SportStore.Controllers
                     ModelState.AddModelError("ImageFile", "Vui lòng chọn ảnh sản phẩm");
                     return View(viewModel);
                 }
-                string image = "";
+                string image = viewModel.Image; // Keep existing image if no new file is uploaded
                 if (viewModel.ImageFile != null && viewModel.ImageFile.Length > 0)
                 {
                     // Kiểm tra định dạng file
@@ -89,17 +90,22 @@ namespace SportStore.Controllers
                     image = $"/images/products/{fileName}";
                 }
 
-                var product = new Product
+                var product = viewModel.Id == 0 ? new Product() : context.Products.Find(viewModel.Id);
+                if (product == null)
                 {
-                    Id = viewModel.Id,
-                    Name = viewModel.Name,
-                    Price = viewModel.Price,
-                    Quantity = viewModel.Quantity,
-                    Image = image,
-                    Description = viewModel.Description
-                };
+                    return NotFound();
+                }
 
-                if (product.Id == 0)
+                product.Name = viewModel.Name;
+                product.Price = viewModel.Price;
+                product.Quantity = viewModel.Quantity;
+                if (!string.IsNullOrEmpty(image))
+                {
+                    product.Image = image;
+                }
+                product.Description = viewModel.Description;
+
+                if (viewModel.Id == 0)
                 {
                     context.Products.Add(product);
                 }
@@ -108,7 +114,7 @@ namespace SportStore.Controllers
                     context.Products.Update(product);
                 }
                 context.SaveChanges();
-                return RedirectToAction("Index");
+                return RedirectToAction(nameof(Index));
             }
             return View(viewModel);
         }
@@ -116,6 +122,11 @@ namespace SportStore.Controllers
         // Xóa sản phẩm
         public IActionResult Delete(int id)
         {
+            if (HttpContext.Session.GetString("IsAdmin") != "true")
+            {
+                return RedirectToAction("Login", "Account", new { area = "" });
+            }
+
             var product = context.Products.Find(id);
             if (product != null)
             {
@@ -132,36 +143,7 @@ namespace SportStore.Controllers
                 context.Products.Remove(product);
                 context.SaveChanges();
             }
-            return RedirectToAction("Index");
-        }
-
-        // GET: Thêm sản phẩm mới
-        public IActionResult AddProduct()
-        {
-            if (HttpContext.Session.GetInt32("IsAdmin") != 1)
-            {
-                return RedirectToAction("Login", "Account");
-            }
-            return View(new Product());
-        }
-
-        // POST: Lưu sản phẩm mới
-        [HttpPost]
-        public IActionResult AddProduct(Product product)
-        {
-            if (HttpContext.Session.GetInt32("IsAdmin") != 1)
-            {
-                return RedirectToAction("Login", "Account");
-            }
-
-            if (ModelState.IsValid)
-            {
-                context.Products.Add(product);
-                context.SaveChanges();
-                TempData["Message"] = "Sản phẩm đã được thêm thành công!";
-                return RedirectToAction("Index");
-            }
-            return View(product);
+            return RedirectToAction(nameof(Index));
         }
     }
 }

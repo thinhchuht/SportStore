@@ -81,9 +81,9 @@
             fetch('/Cart/AddToCart', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                body: JSON.stringify({ productId: productId })
+                body: `productId=${productId}`
             })
             .then(response => response.json())
             .then(data => {

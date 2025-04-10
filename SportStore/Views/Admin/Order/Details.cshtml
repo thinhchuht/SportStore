@@ -1,0 +1,122 @@
+@model Order
+@{
+    ViewData["Title"] = "Chi tiết đơn hàng";
+    Layout = "_AdminLayout";
+}
+
+<div class="container-fluid py-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h1 class="h3 mb-0">Chi tiết đơn hàng #@Model.OrderNumber</h1>
+            <a href="@Url.Action("Index", "Order", new { area = "Admin" })" class="btn btn-light btn-sm">
+                <i class="bi bi-arrow-left"></i> Quay lại
+            </a>
+        </div>
+        <div class="card-body">
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success">
+                    @TempData["Success"]
+                </div>
+            }
+            
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger">
+                    @TempData["Error"]
+                </div>
+            }
+            
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h5>Thông tin đơn hàng</h5>
+                    <p><strong>Mã đơn hàng:</strong> @Model.OrderNumber</p>
+                    <p><strong>Ngày đặt:</strong> @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</p>
+                    <p><strong>Khách hàng:</strong> @Model.User.Username</p>
+                    <p><strong>Email:</strong> @Model.User.Email</p>
+                </div>
+                <div class="col-md-6">
+                    <h5>Thông tin giao hàng</h5>
+                    <p><strong>Địa chỉ:</strong> @Model.ShippingAddress</p>
+                    <p><strong>Số điện thoại:</strong> @Model.PhoneNumber</p>
+                    @if (!string.IsNullOrEmpty(Model.Notes))
+                    {
+                        <p><strong>Ghi chú:</strong> @Model.Notes</p>
+                    }
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Cập nhật trạng thái</h5>
+                </div>
+                <div class="card-body">
+                    <form action="@Url.Action("UpdateStatus", "Order", new { id = Model.Id, area = "Admin" })" method="post">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="orderStatus" class="form-label">Trạng thái đơn hàng</label>
+                                    <select class="form-select" id="orderStatus" name="orderStatus">
+                                        <option value="processing" selected="@(Model.OrderStatus == "processing" ? "selected" : null)">Đang xử lý</option>
+                                        <option value="shipped" selected="@(Model.OrderStatus == "shipped" ? "selected" : null)">Đang giao hàng</option>
+                                        <option value="delivered" selected="@(Model.OrderStatus == "delivered" ? "selected" : null)">Đã giao hàng</option>
+                                        <option value="cancelled" selected="@(Model.OrderStatus == "cancelled" ? "selected" : null)">Đã hủy</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="paymentStatus" class="form-label">Trạng thái thanh toán</label>
+                                    <select class="form-select" id="paymentStatus" name="paymentStatus">
+                                        <option value="pending" selected="@(Model.PaymentStatus == "pending" ? "selected" : null)">Chờ thanh toán</option>
+                                        <option value="paid" selected="@(Model.PaymentStatus == "paid" ? "selected" : null)">Đã thanh toán</option>
+                                        <option value="failed" selected="@(Model.PaymentStatus == "failed" ? "selected" : null)">Thanh toán thất bại</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Cập nhật trạng thái</button>
+                    </form>
+                </div>
+            </div>
+            
+            <h5>Sản phẩm đã đặt</h5>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Sản phẩm</th>
+                            <th>Giá</th>
+                            <th>Số lượng</th>
+                            <th class="text-end">Thành tiền</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.OrderItems)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="@item.Product.Image" alt="@item.Product.Name" class="img-thumbnail me-3" style="width: 60px; height: 60px; object-fit: cover;">
+                                        <div>
+                                            <h6 class="mb-0">@item.Product.Name</h6>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>@item.Price.ToString("N0") VNĐ</td>
+                                <td>@item.Quantity</td>
+                                <td class="text-end">@((item.Price * item.Quantity).ToString("N0")) VNĐ</td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <th colspan="3">Tổng cộng</th>
+                            <th class="text-end">@Model.TotalAmount.ToString("N0") VNĐ</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div> 

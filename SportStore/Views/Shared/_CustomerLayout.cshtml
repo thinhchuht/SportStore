@@ -24,34 +24,43 @@
                     </ul>
                     <ul class="navbar-nav">
                         @{
+                            var username = ViewContext.HttpContext.Session.GetString("Username");
                             var isAdmin = ViewContext.HttpContext.Session.GetString("IsAdmin") == "true";
                         }
-                        @if (isAdmin)
+                        @if (!string.IsNullOrEmpty(username))
                         {
+                            @if (!isAdmin)
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-controller="Cart" asp-action="Index">
+                                        <i class="bi bi-cart"></i> Giỏ hàng
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-controller="Order" asp-action="Index">
+                                        <i class="bi bi-bag"></i> Đơn hàng
+                                    </a>
+                                </li>
+                            }
+                            else
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-controller="Admin" asp-action="Index">
+                                        <i class="bi bi-gear"></i> Quản lý sản phẩm
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-area="Admin" asp-controller="Order" asp-action="Index">
+                                        <i class="bi bi-bag"></i> Quản lý đơn hàng
+                                    </a>
+                                </li>
+                            }
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Cart" asp-action="Index">
-                                    <i class="bi bi-cart"></i> Giỏ hàng
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Order" asp-action="Index">
-                                    <i class="bi bi-receipt"></i> Đơn hàng
+                                <a class="nav-link text-dark" asp-controller="Account" asp-action="Logout">
+                                    <i class="bi bi-box-arrow-right"></i> Đăng xuất
                                 </a>
                             </li>
                         }
-                        else
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Admin" asp-action="Index">
-                                    <i class="bi bi-gear"></i> Quản lý sản phẩm
-                                </a>
-                            </li>
-                        }
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-controller="Account" asp-action="Logout">
-                                <i class="bi bi-box-arrow-right"></i> Đăng xuất
-                            </a>
-                        </li>
                     </ul>
                 </div>
             </div>

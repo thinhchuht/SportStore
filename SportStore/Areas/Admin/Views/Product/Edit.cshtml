@@ -1,4 +1,5 @@
-﻿@{
+@using SportStore.Models
+@{
     Layout = "_AdminLayout";
     ViewData["Title"] = Model.Id == 0 ? "Thêm sản phẩm" : "Sửa sản phẩm";
 }
@@ -49,7 +50,7 @@
                         <button type="submit" class="btn btn-primary">
                             <i class="bi bi-save"></i> Lưu
                         </button>
-                        <a href="@Url.Action("Index")" class="btn btn-secondary">
+                        <a asp-action="Index" class="btn btn-secondary">
                             <i class="bi bi-x-circle"></i> Hủy
                         </a>
                     </div>
@@ -61,4 +62,4 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-}
+} 

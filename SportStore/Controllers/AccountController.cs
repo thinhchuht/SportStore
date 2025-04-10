@@ -20,8 +20,8 @@ namespace SportStore.Controllers
             if (user != null)
             {
                 HttpContext.Session.SetString("Username", user.Username);
-                HttpContext.Session.SetInt32("IsAdmin", user.IsAdmin ? 1 : 0);
-                return user.IsAdmin ? RedirectToAction("Index", "Admin") : RedirectToAction("Index", "Home");
+                HttpContext.Session.SetString("IsAdmin", user.IsAdmin.ToString().ToLower());
+                return user.IsAdmin ? RedirectToAction("Index", "Product", new { area = "Admin" }) : RedirectToAction("Index", "Home");
             }
             ViewBag.Message = "Tên đăng nhập hoặc mật khẩu không đúng!";
             return View();
@@ -95,7 +95,7 @@ namespace SportStore.Controllers
         {
             var message = new MimeMessage();
             message.From.Add(new MailboxAddress("Sport Store", "thinhchuht0@gmail.com"));
-            message.To.Add(new MailboxAddress("KH", email));
+            message.To.Add(new MailboxAddress("", email));
             message.Subject = "Mã xác nhận đăng ký";
             message.Body = new TextPart("plain")
             {
@@ -135,7 +135,7 @@ namespace SportStore.Controllers
 
             // Tạo mật khẩu mới ngẫu nhiên
             var newPassword = GenerateRandomPassword();
-            
+
             // Cập nhật mật khẩu mới
             user.Password = newPassword;
             await context.SaveChangesAsync();
