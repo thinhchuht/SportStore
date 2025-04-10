@@ -110,5 +110,64 @@ namespace SportStore.Controllers
                 client.Disconnect(true);
             }
         }
+
+        [HttpGet]
+        public IActionResult ForgotPassword()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ForgotPassword(string email)
+        {
+            if (string.IsNullOrEmpty(email))
+            {
+                ModelState.AddModelError("", "Vui lòng nhập email");
+                return View();
+            }
+
+            var user = context.Users.FirstOrDefault(u => u.Email == email);
+            if (user == null)
+            {
+                ModelState.AddModelError("", "Email không tồn tại trong hệ thống");
+                return View();
+            }
+
+            // Tạo mật khẩu mới ngẫu nhiên
+            var newPassword = GenerateRandomPassword();
+            
+            // Cập nhật mật khẩu mới
+            user.Password = newPassword;
+            await context.SaveChangesAsync();
+
+            // Gửi email chứa mật khẩu mới
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress("Sport Store", "thinhchuht0@gmail.com"));
+            message.To.Add(new MailboxAddress("", email));
+            message.Subject = "Đặt lại mật khẩu";
+            message.Body = new TextPart("plain")
+            {
+                Text = $"Mật khẩu mới của bạn là: {newPassword}\nVui lòng đăng nhập và đổi mật khẩu ngay sau khi nhận được email này."
+            };
+
+            using (var client = new SmtpClient())
+            {
+                client.Connect("smtp.gmail.com", 587, SecureSocketOptions.StartTls);
+                client.Authenticate("thinhchuht0@gmail.com", "sbpe apta ksal uygf");
+                client.Send(message);
+                client.Disconnect(true);
+            }
+
+            TempData["Message"] = "Mật khẩu mới đã được gửi đến email của bạn";
+            return RedirectToAction("Login");
+        }
+
+        private string GenerateRandomPassword()
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            var random = new Random();
+            return new string(Enumerable.Repeat(chars, 8)
+                .Select(s => s[random.Next(s.Length)]).ToArray());
+        }
     }
 }
