@@ -1,0 +1,64 @@
+﻿@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = Model.Id == 0 ? "Thêm sản phẩm" : "Sửa sản phẩm";
+}
+
+@model ProductViewModel
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white text-center">
+                <h2>@(Model.Id == 0 ? "Thêm sản phẩm" : "Sửa sản phẩm")</h2>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="Id" value="@Model.Id" />
+                    <div class="mb-3">
+                        <label class="form-label">Tên sản phẩm</label>
+                        <input type="text" name="Name" value="@Model.Name" class="form-control" required />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Giá (VNĐ)</label>
+                        <input type="number" name="Price" value="@Model.Price" class="form-control" required />
+                        <span asp-validation-for="Price" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Số lượng</label>
+                        <input type="number" name="Quantity" value="@Model.Quantity" class="form-control" required />
+                        <span asp-validation-for="Quantity" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ảnh sản phẩm</label>
+                        <input type="file" name="ImageFile" class="form-control" accept="image/*" />
+                        <span asp-validation-for="ImageFile" class="text-danger"></span>
+                        @if (!string.IsNullOrEmpty(Model.Image))
+                        {
+                            <div class="mt-2">
+                                <img src="@Model.Image" alt="Current product image" style="max-width: 200px;" />
+                                <input type="hidden" name="Image" value="@Model.Image" />
+                            </div>
+                        }
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mô tả</label>
+                        <textarea name="Description" class="form-control">@Model.Description</textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> Lưu
+                        </button>
+                        <a href="@Url.Action("Index")" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Hủy
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
